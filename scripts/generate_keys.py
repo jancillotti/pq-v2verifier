@@ -125,13 +125,35 @@ def generate_falcon_keypairs():
                 outF.write(publicKey_hex)
                 outF.close()
 
+def generate_sphincs_keypairs():
+    publicKeyPathRoot = os.getcwd() + "/sphincs_keys/"
+    privateKeyPathRoot = os.getcwd() + "/sphincs_keys/"
+
+    for i in range(0, 10):
+        sigalg = "SPHINCS+-SHA2-128s"
+        with oqs.Signature(sigalg) as signer:
+            publicKey = signer.generate_keypair()
+            privateKey = signer.export_secret_key()
+
+            privateKeyPath = privateKeyPathRoot + "/" + str(i) + "/sphincs.key"
+            publicKeyPath = publicKeyPathRoot + "/" + str(i) + "/sphincs.pub"
+
+            privateKey_hex = privateKey.hex()
+            publicKey_hex = publicKey.hex()
+
+            with open(privateKeyPath, "w") as outF:
+                outF.write(privateKey_hex)
+
+            with open(publicKeyPath, "w") as outF:
+                outF.write(publicKey_hex)
+
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Generate key pairs for one of several algorithms")
     parser.add_argument("algorithm",
                         help="choice of algorithm for generated key pairs",
-                        choices=["falcon-512", "dilithium", "rainbow", "ecdsa-p256", "all"]
+                        choices=["falcon-512", "dilithium", "rainbow", "ecdsa-p256", "sphincs", "all"]
                         )
 
     args = parser.parse_args()
@@ -162,8 +184,19 @@ if __name__ == "__main__":
         generate_dilithium_keypairs()
     elif args.algorithm == "rainbow":
         generate_rainbow_keypairs()
+
+    elif args.algorithm == "sphincs":
+        if not os.path.exists('sphincs_keys'):
+            os.mkdir('sphincs_keys')
+            os.chdir('sphincs_keys')
+            for i in range(10):
+                os.mkdir(str(i))
+            os.chdir('..')
+        generate_sphincs_keypairs()
+
     elif args.algorithm == "all":
         generate_rainbow_keypairs()
         generate_dilithium_keypairs()
         generate_falcon_keypairs()
         generate_ecdsa_p256_keypairs()
+        generate_sphincs_keypairs()
